@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>我的 AI 学习空间</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌌</text></svg>">
+<style>
+  :root{
+    --bg1:#070b1f; --bg2:#0e1533; --bg3:#1b2152; --bg4:#2a1a5e;
+    --text:#e8ebff; --muted:#9aa3d6; --muted2:#6f77a8;
+    --card:rgba(255,255,255,.05); --card-hover:rgba(255,255,255,.09);
+    --border:rgba(255,255,255,.09);
+    --blue:#7aa2ff; --purple:#b388ff; --cyan:#5eead4; --pink:#ff8fb1;
+    --green:#7ee787; --orange:#ffb86c;
+    --shadow:0 10px 40px rgba(0,0,0,.45);
+    --radius:16px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    color:var(--text);
+    background:linear-gradient(160deg,var(--bg1) 0%,var(--bg2) 35%,var(--bg3) 70%,var(--bg4) 100%);
+    background-attachment:fixed;
+    overflow-x:hidden;
+    line-height:1.6;
+  }
+  /* 背景光晕 */
+  body::before{
+    content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+    background:
+      radial-gradient(900px 600px at 85% -10%, rgba(120,90,255,.20), transparent 60%),
+      radial-gradient(700px 500px at -10% 110%, rgba(60,140,255,.16), transparent 60%),
+      radial-gradient(600px 400px at 50% 50%, rgba(94,234,212,.05), transparent 60%);
+  }
+  /* 星星 */
+  .star{position:fixed;background:#fff;border-radius:50%;pointer-events:none;z-index:0;opacity:.8;animation:twinkle var(--d,4s) ease-in-out infinite;animation-delay:var(--dl,0s)}
+  @keyframes twinkle{0%,100%{opacity:.15;transform:scale(.8)}50%{opacity:.95;transform:scale(1.15)}}
+  .shooting{position:fixed;width:120px;height:1px;background:linear-gradient(90deg,#fff,transparent);z-index:0;opacity:0;animation:shoot 9s linear infinite;transform:rotate(-35deg)}
+  @keyframes shoot{0%{opacity:0;transform:translate(0,0) rotate(-35deg)}2%{opacity:.9}6%{opacity:0;transform:translate(-320px,220px) rotate(-35deg)}100%{opacity:0;transform:translate(-320px,220px) rotate(-35deg)}}
+
+  .layout{position:relative;z-index:2;display:flex;min-height:100vh;max-width:1600px;margin:0 auto}
+
+  /* ===== 侧边栏 ===== */
+  .sidebar{
+    width:280px;flex-shrink:0;padding:28px 20px;position:sticky;top:0;height:100vh;
+    display:flex;flex-direction:column;gap:18px;overflow-y:auto;
+    background:rgba(10,13,40,.45);backdrop-filter:blur(16px);
+    border-right:1px solid var(--border);
+  }
+  .profile{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px}
+  .avatar{
+    width:92px;height:92px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(135deg,var(--blue),var(--purple));font-size:38px;font-weight:700;color:#fff;
+    box-shadow:0 0 0 4px rgba(255,255,255,.12),0 8px 30px rgba(122,162,255,.35);
+    overflow:hidden;cursor:pointer;position:relative;
+  }
+  .avatar img{width:100%;height:100%;object-fit:cover}
+  .profile h1{font-size:20px;letter-spacing:1px}
+  .profile .slogan{font-size:13px;color:var(--muted)}
+  .edit-profile{font-size:12px;color:var(--blue);background:none;border:1px solid rgba(122,162,255,.4);padding:4px 12px;border-radius:20px;cursor:pointer}
+  .edit-profile:hover{background:rgba(122,162,255,.15)}
+
+  .contacts{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+  .contact{
+    display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--text);
+    background:var(--card);border:1px solid var(--border);padding:5px 10px;border-radius:20px;text-decoration:none;
+  }
+  .contact:hover{background:var(--card-hover)}
+
+  .nav{display:flex;flex-direction:column;gap:4px}
+  .nav-item{
+    display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:12px;cursor:pointer;
+    color:var(--muted);font-size:14px;border:1px solid transparent;transition:.2s;background:none;text-align:left;width:100%;
+  }
+  .nav-item:hover{color:var(--text);background:var(--card)}
+  .nav-item.active{color:#fff;background:linear-gradient(135deg,rgba(122,162,255,.22),rgba(179,136,255,.22));border-color:rgba(122,162,255,.35)}
+  .nav-item .ico{font-size:17px;width:22px;text-align:center}
+
+  .side-recent h3{font-size:12px;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+  .side-recent .r-item{font-size:12.5px;color:var(--muted);padding:6px 0;border-left:2px solid var(--purple);padding-left:10px;margin-bottom:8px}
+  .side-recent .r-item b{display:block;color:var(--text);font-size:13px;font-weight:600}
+  .side-recent .r-item span{color:var(--muted2);font-size:11px}
+
+  /* ===== 主内容 ===== */
+  .main{flex:1;min-width:0;padding:0 30px 60px}
+  .topbar{
+    position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:14px;
+    padding:18px 0;background:linear-gradient(180deg,rgba(7,11,31,.85),rgba(7,11,31,0));
+    backdrop-filter:blur(8px);
+  }
+  .topbar h2{font-size:22px;font-weight:700}
+  .hamburger{display:none;background:none;border:1px solid var(--border);color:var(--text);font-size:18px;width:38px;height:38px;border-radius:10px;cursor:pointer}
+  .view{display:none;animation:fade .25s ease}
+  .view.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  .card{
+    background:var(--card);backdrop-filter:blur(14px);border:1px solid var(--border);
+    border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);
+  }
+  .section-title{font-size:15px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+  .btn{
+    display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;cursor:pointer;
+    padding:8px 16px;border-radius:12px;border:1px solid rgba(122,162,255,.4);color:var(--blue);
+    background:rgba(122,162,255,.08);transition:.2s;
+  }
+  .btn:hover{background:rgba(122,162,255,.18)}
+  .btn.primary{background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff;border:none}
+  .btn.primary:hover{filter:brightness(1.1)}
+  .btn.small{padding:5px 11px;font-size:12px;border-radius:10px}
+
+  /* 概览 */
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:18px}
+  .stat{text-align:center;padding:20px 10px}
+  .stat .num{font-size:32px;font-weight:800;background:linear-gradient(135deg,var(--cyan),var(--blue));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .stat .lab{font-size:12px;color:var(--muted);margin-top:4px}
+  .overview-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+
+  /* 网站导航 */
+  .site-cat{margin-bottom:26px}
+  .site-cat-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .site-cat-head .cat-tag{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:700}
+  .dot{width:10px;height:10px;border-radius:50%;box-shadow:0 0 10px currentColor}
+  .site-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+  .site-card{position:relative;display:block;padding:16px;border-radius:14px;text-decoration:none;color:var(--text);transition:.2s}
+  .site-card:hover{background:var(--card-hover);transform:translateY(-3px)}
+  .site-card .logo{
+    width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:16px;color:#fff;margin-bottom:10px;
+  }
+  .site-card h4{font-size:14px;margin-bottom:4px}
+  .site-card .desc{font-size:12px;color:var(--muted);line-height:1.5}
+  .site-card .host{font-size:11px;color:var(--muted2);margin-top:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .del{position:absolute;top:8px;right:8px;width:24px;height:24px;border-radius:8px;border:none;background:rgba(255,80,80,.15);color:#ff8a8a;cursor:pointer;font-size:13px;opacity:0;transition:.2s}
+  .site-card:hover .del,.proj-card:hover .del,.note-item:hover .del{opacity:1}
+
+  /* 项目 */
+  .proj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+  .proj-card{position:relative;padding:18px}
+  .proj-card h4{font-size:15px;display:flex;align-items:center;gap:8px}
+  .proj-card h4 a{color:var(--text);text-decoration:none}
+  .proj-card h4 a:hover{color:var(--blue)}
+  .proj-card .desc{font-size:13px;color:var(--muted);margin:8px 0 12px}
+  .tags{display:flex;flex-wrap:wrap;gap:6px}
+  .tag{font-size:11px;padding:3px 9px;border-radius:10px;background:rgba(122,162,255,.15);color:#bcd0ff}
+
+  /* 笔记 */
+  .notes-wrap{display:flex;gap:16px;align-items:flex-start}
+  .note-list{width:270px;flex-shrink:0;display:flex;flex-direction:column;gap:8px}
+  .note-item{position:relative;padding:12px 14px;border-radius:12px;cursor:pointer;background:var(--card);border:1px solid var(--border);transition:.2s}
+  .note-item:hover{background:var(--card-hover)}
+  .note-item.active{border-color:rgba(122,162,255,.5);background:rgba(122,162,255,.12)}
+  .note-item h5{font-size:13.5px;margin-bottom:3px}
+  .note-item .meta{font-size:11px;color:var(--muted2)}
+  .note-editor{flex:1;min-width:0}
+  .note-editor input[type=text],.note-editor textarea{
+    width:100%;background:rgba(0,0,0,.25);border:1px solid var(--border);color:var(--text);
+    border-radius:12px;padding:12px 14px;font-size:14px;font-family:inherit;outline:none;
+  }
+  .note-editor input[type=text]:focus,.note-editor textarea:focus{border-color:var(--blue)}
+  .note-editor textarea{min-height:360px;resize:vertical;line-height:1.7;font-family:ui-monospace,Consolas,"Microsoft YaHei",monospace}
+  .note-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+  .note-preview{padding:16px 18px;min-height:360px;font-size:14px;overflow:auto}
+  .note-preview img{max-width:100%;border-radius:10px}
+  .note-preview pre{background:rgba(0,0,0,.35);padding:14px;border-radius:10px;overflow:auto;margin:10px 0}
+  .note-preview code{font-family:ui-monospace,Consolas,monospace;font-size:13px}
+  .note-preview p{margin:8px 0}
+  .note-preview h1,.note-preview h2,.note-preview h3{margin:14px 0 8px}
+  .note-preview ul,.note-preview ol{margin:8px 0;padding-left:24px}
+  .note-preview blockquote{border-left:3px solid var(--purple);padding:4px 14px;color:var(--muted);margin:10px 0}
+  .note-preview a{color:var(--cyan)}
+  .note-preview hr{border:none;border-top:1px solid var(--border);margin:14px 0}
+  .note-search{margin-bottom:10px}
+
+  /* 待办 */
+  .todo-input{display:flex;gap:10px;margin-bottom:16px}
+  .todo-input input{flex:1;background:rgba(0,0,0,.25);border:1px solid var(--border);color:var(--text);border-radius:12px;padding:10px 14px;font-size:14px;outline:none}
+  .todo-input input:focus{border-color:var(--blue)}
+  .todo-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:12px;background:var(--card);border:1px solid var(--border);margin-bottom:8px}
+  .todo-item input[type=checkbox]{width:18px;height:18px;accent-color:var(--blue);cursor:pointer}
+  .todo-item .txt{flex:1;font-size:14px}
+  .todo-item.done .txt{text-decoration:line-through;color:var(--muted2)}
+  .todo-del{background:none;border:none;color:var(--muted2);cursor:pointer;font-size:15px}
+  .todo-del:hover{color:#ff8a8a}
+
+  /* 学习历程 */
+  .timeline{position:relative;padding-left:26px}
+  .timeline::before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:2px;background:linear-gradient(var(--blue),var(--purple),transparent)}
+  .tl-item{position:relative;padding:0 0 24px 10px}
+  .tl-item::before{content:"";position:absolute;left:-24px;top:6px;width:12px;height:12px;border-radius:50%;background:var(--purple);box-shadow:0 0 12px var(--purple)}
+  .tl-item .tl-date{font-size:12px;color:var(--cyan);font-weight:600}
+  .tl-item h4{font-size:15px;margin:2px 0}
+  .tl-item p{font-size:13px;color:var(--muted)}
+
+  .empty{color:var(--muted2);font-size:13px;text-align:center;padding:30px 10px}
+
+  /* 模态框 */
+  .modal-mask{position:fixed;inset:0;background:rgba(4,6,18,.7);backdrop-filter:blur(6px);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
+  .modal-mask.show{display:flex}
+  .modal{width:100%;max-width:460px;background:linear-gradient(160deg,#12163a,#1b1f52);border:1px solid var(--border);border-radius:18px;padding:24px;box-shadow:var(--shadow);max-height:90vh;overflow-y:auto}
+  .modal h3{margin-bottom:18px;font-size:18px}
+  .modal label{display:block;font-size:12.5px;color:var(--muted);margin:12px 0 5px}
+  .modal input[type=text],.modal input[type=url],.modal textarea,.modal select{
+    width:100%;background:rgba(0,0,0,.25);border:1px solid var(--border);color:var(--text);
+    border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;outline:none;
+  }
+  .modal input:focus,.modal textarea:focus,.modal select:focus{border-color:var(--blue)}
+  .modal textarea{min-height:70px;resize:vertical}
+  .modal .btn-row{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+  .modal .btn.ghost{background:none;color:var(--muted);border-color:var(--border)}
+
+  @media(max-width:900px){
+    .sidebar{position:fixed;left:0;top:0;transform:translateX(-100%);transition:.3s;z-index:50;width:260px}
+    .sidebar.open{transform:none}
+    .hamburger{display:block}
+    .main{padding:0 16px 60px}
+    .notes-wrap{flex-direction:column}
+    .note-list{width:100%;flex-direction:row;overflow-x:auto}
+    .note-item{min-width:200px}
+  }
+</style>
+</head>
+<body>
+<div id="stars"></div>
+
+<div class="layout">
+  <!-- 侧边栏 -->
+  <aside class="sidebar" id="sidebar">
+    <div class="profile">
+      <div class="avatar" id="avatarBox" title="点击编辑资料"></div>
+      <h1 id="profileName">AI 学习者</h1>
+      <p class="slogan" id="profileSlogan">路虽远，行则将至</p>
+      <button class="edit-profile" data-action="edit-profile">✎ 编辑资料</button>
+      <div class="contacts" id="profileContacts"></div>
+    </div>
+
+    <nav class="nav" id="navMenu">
+      <button class="nav-item active" data-view="overview"><span class="ico">🪐</span>概览</button>
+      <button class="nav-item" data-view="sites"><span class="ico">🧭</span>网站导航</button>
+      <button class="nav-item" data-view="projects"><span class="ico">🚀</span>项目收藏</button>
+      <button class="nav-item" data-view="notes"><span class="ico">📝</span>学习笔记</button>
+      <button class="nav-item" data-view="todos"><span class="ico">✅</span>待办清单</button>
+      <button class="nav-item" data-view="journey"><span class="ico">🛤️</span>学习历程</button>
+    </nav>
+
+    <div class="side-recent" id="sideRecent"></div>
+  </aside>
+
+  <!-- 主内容 -->
+  <main class="main">
+    <header class="topbar">
+      <button class="hamburger" id="hamburger">☰</button>
+      <h2 id="viewTitle">概览</h2>
+    </header>
+
+    <!-- 概览 -->
+    <section class="view active" id="view-overview">
+      <div class="stat-grid" id="statGrid"></div>
+      <div class="overview-grid">
+        <div class="card">
+          <div class="section-title">📌 今日待办</div>
+          <div id="ovTodos"></div>
+        </div>
+        <div class="card">
+          <div class="section-title">📝 最近笔记</div>
+          <div id="ovNotes"></div>
+        </div>
+        <div class="card">
+          <div class="section-title">💡 学习小贴士</div>
+          <p style="font-size:13px;color:var(--muted);line-height:1.8" id="tip"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 网站导航 -->
+    <section class="view" id="view-sites">
+      <div class="card" style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:13px;color:var(--muted)">收藏常用网站，按分类整理。点击卡片即可在新标签页打开。</span>
+        <button class="btn primary" data-action="add-site">＋ 添加网站</button>
+      </div>
+      <div id="siteCats"></div>
+    </section>
+
+    <!-- 项目 -->
+    <section class="view" id="view-projects">
+      <div class="card" style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:13px;color:var(--muted)">收藏 GitHub 上常用 / 值得学习的开源项目。</span>
+        <button class="btn primary" data-action="add-project">＋ 添加项目</button>
+      </div>
+      <div class="proj-grid" id="projGrid"></div>
+    </section>
+
+    <!-- 笔记 -->
+    <section class="view" id="view-notes">
+      <div class="card" style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+        <span style="font-size:13px;color:var(--muted)">支持 Markdown 语法，可直接 <b style="color:var(--text)">粘贴 / 拖拽图片</b>（存于本地浏览器）。</span>
+        <button class="btn primary" data-action="add-note">＋ 新建笔记</button>
+      </div>
+      <div class="notes-wrap">
+        <div class="note-list" style="display:flex;flex-direction:column;gap:8px">
+          <input type="text" class="note-search" id="noteSearch" placeholder="🔍 搜索笔记…">
+          <div id="noteList" style="display:flex;flex-direction:column;gap:8px"></div>
+        </div>
+        <div class="note-editor card" id="noteEditor" style="display:none">
+          <div class="note-toolbar">
+            <button class="btn small" data-action="save-note">💾 保存</button>
+            <button class="btn small" id="togglePreview">👁 预览</button>
+            <button class="btn small" data-action="del-note" style="border-color:rgba(255,120,120,.4);color:#ff9a9a">🗑 删除</button>
+            <span style="font-size:11px;color:var(--muted2);margin-left:auto">Ctrl+S 保存</span>
+          </div>
+          <input type="text" id="noteTitle" placeholder="笔记标题">
+          <input type="text" id="noteTags" placeholder="标签（用逗号分隔，如：深度学习, Transformer）" style="margin:10px 0">
+          <textarea id="noteContent" placeholder="开始记录…&#10;&#10;支持 Markdown：&#10;# 标题  **加粗**  *斜体*  `代码`&#10;[链接](https://...)   ![图片](可粘贴图片)&#10;```python&#10;代码块&#10;```"></textarea>
+          <div class="note-preview" id="notePreview" style="display:none"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 待办 -->
+    <section class="view" id="view-todos">
+      <div class="card" style="max-width:640px;margin:0 auto">
+        <div class="section-title">✅ 待办清单</div>
+        <div class="todo-input">
+          <input type="text" id="todoInput" placeholder="添加学习任务，如：完成第三章习题…">
+          <button class="btn primary" data-action="add-todo">添加</button>
+        </div>
+        <div id="todoList"></div>
+      </div>
+    </section>
+
+    <!-- 学习历程 -->
+    <section class="view" id="view-journey">
+      <div class="card" style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:13px;color:var(--muted)">记录学习路上的每一个里程碑。</span>
+        <button class="btn primary" data-action="add-journey">＋ 添加里程碑</button>
+      </div>
+      <div class="card">
+        <div class="timeline" id="timeline"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- 通用模态框 -->
+<div class="modal-mask" id="modalMask">
+  <div class="modal" id="modalBox"></div>
+</div>
+
+<script>
+/* ============ 工具 ============ */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+const fmtTime = ts => new Date(ts).toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem('study_'+k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+  set(k, v){ localStorage.setItem('study_'+k, JSON.stringify(v)); }
+};
+
+/* ============ 默认数据（首次打开预填，可自行删改） ============ */
+const CATS = {
+  blog:    { name:'博客文章', color:'#4dd0e1' },
+  api:     { name:'API 接口', color:'#7ee787' },
+  translate:{ name:'翻译网站', color:'#ffb86c' },
+  boost:   { name:'加速 / 镜像', color:'#b388ff' },
+};
+
+const DEFAULT = {
+  profile: {
+    name:'AI 学习者', slogan:'路虽远，行则将至', avatar:'',
+    contacts:{ github:'', email:'', bilibili:'', blog:'' }
+  },
+  sites: [
+    { id:uid(), cat:'blog', name:'Papers with Code', url:'https://paperswithcode.com', desc:'论文 + 代码，跟踪最新 SOTA' },
+    { id:uid(), cat:'blog', name:'动手学深度学习', url:'https://zh.d2l.ai', desc:'李沐等人的经典入门教材' },
+    { id:uid(), cat:'blog', name:'机器之心', url:'https://www.jiqizhixin.com', desc:'AI 前沿资讯与解读' },
+    { id:uid(), cat:'blog', name:'Hugging Face 论文', url:'https://huggingface.co/papers', desc:'每日最新论文速览' },
+    { id:uid(), cat:'api', name:'OpenAI 文档', url:'https://platform.openai.com/docs', desc:'GPT 系列 API 文档' },
+    { id:uid(), cat:'api', name:'Claude / Anthropic', url:'https://docs.anthropic.com', desc:'Claude 模型 API 文档' },
+    { id:uid(), cat:'api', name:'Google AI Studio', url:'https://aistudio.google.com', desc:'Gemini API 与测试' },
+    { id:uid(), cat:'api', name:'Hugging Face Hub', url:'https://huggingface.co', desc:'模型 / 数据集仓库' },
+    { id:uid(), cat:'translate', name:'DeepL 翻译', url:'https://www.deepl.com/translator', desc:'高质量机器翻译' },
+    { id:uid(), cat:'translate', name:'沉浸式翻译', url:'https://immersivetranslate.com', desc:'浏览器双语翻译插件' },
+    { id:uid(), cat:'translate', name:'Google 翻译', url:'https://translate.google.com', desc:'通用多语言翻译' },
+    { id:uid(), cat:'boost', name:'HF-Mirror', url:'https://hf-mirror.com', desc:'Hugging Face 国内镜像' },
+  ],
+  projects: [
+    { id:uid(), name:'transformers', url:'https://github.com/huggingface/transformers', desc:'Hugging Face 预训练模型库', tags:['NLP','预训练'] },
+    { id:uid(), name:'pytorch', url:'https://github.com/pytorch/pytorch', desc:'主流深度学习框架', tags:['框架'] },
+    { id:uid(), name:'langchain', url:'https://github.com/langchain-ai/langchain', desc:'LLM 应用开发框架', tags:['LLM','应用'] },
+    { id:uid(), name:'d2l-zh', url:'https://github.com/d2l-ai/d2l-zh', desc:'动手学深度学习中文版', tags:['教材'] },
+    { id:uid(), name:'stable-diffusion-webui', url:'https://github.com/AUTOMATIC1111/stable-diffusion-webui', desc:'AI 绘画本地部署', tags:['图像生成'] },
+  ],
+  notes: [
+    { id:uid(), title:'欢迎使用我的学习空间', tags:'使用说明', content:'# 👋 欢迎\n\n这里是你的个人学习空间，所有数据都保存在**本地浏览器**。\n\n## 你可以\n\n- 在「网站导航」收藏常用网站\n- 在「项目收藏」整理 GitHub 项目\n- 在这里记录笔记，支持 **Markdown** 和粘贴图片\n- 用「待办清单」规划学习任务\n- 在「学习历程」记录里程碑\n\n> 小提示：点击左侧「编辑资料」更换头像和昵称。', updatedAt: Date.now() },
+  ],
+  todos: [
+    { id:uid(), text:'熟悉本页面的各个功能区', done:false },
+    { id:uid(), text:'把常用的学习网站收藏进来', done:false },
+  ],
+  journey: [
+    { id:uid(), date:'2026-09', title:'开始学习 Python 基础', desc:'掌握变量、流程控制、函数等基础语法' },
+    { id:uid(), date:'2026-10', title:'入门机器学习', desc:'学习线性回归、分类、模型评估' },
+    { id:uid(), date:'未来', title:'深度学习与项目实践', desc:'计划：神经网络、PyTorch、大模型' },
+  ],
+};
+
+let state = {};
+function loadAll(){
+  for(const k in DEFAULT) state[k] = store.get(k, DEFAULT[k]);
+  if(!store.get('inited', false)){ for(const k in DEFAULT) store.set(k, DEFAULT[k]); store.set('inited', true); }
+}
+function save(key){ store.set(key, state[key]); }
+
+/* ============ 星空 ============ */
+function initStars(){
+  const box = $('#stars');
+  for(let i=0;i<140;i++){
+    const s = document.createElement('span');
+    s.className = 'star';
+    const size = Math.random()*2.2 + .6;
+    s.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${(Math.random()*4+2).toFixed(1)}s;--dl:${(Math.random()*5).toFixed(1)}s`;
+    box.appendChild(s);
+  }
+  for(let i=0;i<2;i++){
+    const m = document.createElement('div');
+    m.className = 'shooting';
+    m.style.cssText = `left:${30+Math.random()*50}%;top:${Math.random()*30}%;animation-delay:${(i*5+2).toFixed(1)}s`;
+    box.appendChild(m);
+  }
+}
+
+/* ============ 导航切换 ============ */
+const TITLES = { overview:'概览', sites:'网站导航', projects:'项目收藏', notes:'学习笔记', todos:'待办清单', journey:'学习历程' };
+function switchView(view){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  $('#view-'+view).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.view===view));
+  $('#viewTitle').textContent = TITLES[view];
+  $('#sidebar').classList.remove('open');
+  if(view==='overview') renderOverview();
+  if(view==='journey') renderJourney();
+}
+
+/* ============ 侧边栏 ============ */
+function renderProfile(){
+  const p = state.profile;
+  $('#profileName').textContent = p.name;
+  $('#profileSlogan').textContent = p.slogan;
+  const ab = $('#avatarBox');
+  ab.innerHTML = p.avatar ? `<img src="${esc(p.avatar)}" alt="头像">` : esc(p.name.charAt(0) || 'AI');
+  const map = [['github','🐙 GitHub'],['email','✉️ 邮箱'],['bilibili','📺 B站'],['blog','🌐 博客']];
+  const c = $('#profileContacts');
+  c.innerHTML = map.filter(([k])=>p.contacts[k]).map(([k,label])=>{
+    const v = p.contacts[k];
+    const href = k==='email' ? `mailto:${v}` : v;
+    return `<a class="contact" href="${esc(href)}" target="_blank" rel="noopener">${label}</a>`;
+  }).join('');
+}
+function renderSideRecent(){
+  const items = [...state.journey].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
+  $('#sideRecent').innerHTML = items.length
+    ? '<h3>学习历程</h3>' + items.map(it=>`<div class="r-item"><b>${esc(it.title)}</b><span>${esc(it.date)}</span></div>`).join('')
+    : '';
+}
+
+/* ============ 概览 ============ */
+function renderOverview(){
+  const done = state.todos.filter(t=>t.done).length;
+  const stats = [
+    ['网站', state.sites.length], ['项目', state.projects.length],
+    ['笔记', state.notes.length], ['待办完成', done+'/'+state.todos.length],
+  ];
+  $('#statGrid').innerHTML = stats.map(([l,n])=>`<div class="card stat"><div class="num">${n}</div><div class="lab">${l}</div></div>`).join('');
+  $('#ovTodos').innerHTML = state.todos.length
+    ? state.todos.slice(0,5).map(t=>`<div style="font-size:13px;padding:5px 0;color:${t.done?'var(--muted2)':'var(--text)'}">${t.done?'✅':'⬜'} ${esc(t.text)}</div>`).join('')
+    : '<div class="empty">暂无待办，去添加一个吧</div>';
+  const recent = [...state.notes].sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0)).slice(0,4);
+  $('#ovNotes').innerHTML = recent.length
+    ? recent.map(n=>`<div style="font-size:13px;padding:5px 0;cursor:pointer" onclick="openNote('${n.id}')">📄 ${esc(n.title)} <span style="color:var(--muted2);font-size:11px">${fmtTime(n.updatedAt)}</span></div>`).join('')
+    : '<div class="empty">还没有笔记</div>';
+  const tips = ['学习新概念后，尝试用自己的话写一篇笔记，记忆更牢固。','遇到不懂的英文论文，先读摘要和图表，再精读方法。','动手实现一个小项目，比看十篇教程更有收获。','定期回顾笔记，把零散知识串成体系。','善用官方文档，它是比大多数教程更可靠的老师。'];
+  $('#tip').textContent = tips[new Date().getDate() % tips.length];
+}
+
+/* ============ 网站导航 ============ */
+function renderSites(){
+  const box = $('#siteCats');
+  box.innerHTML = Object.entries(CATS).map(([key,cat])=>{
+    const list = state.sites.filter(s=>s.cat===key);
+    const cards = list.map(s=>{
+      const host = (()=>{ try{ return new URL(s.url).hostname; }catch(e){ return s.url; } })();
+      return `<a class="site-card card" href="${esc(s.url)}" target="_blank" rel="noopener">
+        <span class="del" data-action="del-site" data-id="${s.id}">✕</span>
+        <div class="logo" style="background:${cat.color}">${esc(s.name.charAt(0))}</div>
+        <h4>${esc(s.name)}</h4>
+        <div class="desc">${esc(s.desc)}</div>
+        <div class="host">${esc(host)}</div>
+      </a>`;
+    }).join('');
+    return `<div class="site-cat">
+      <div class="site-cat-head">
+        <div class="cat-tag"><span class="dot" style="background:${cat.color};color:${cat.color}"></span>${cat.name} <span style="color:var(--muted2);font-size:12px">(${list.length})</span></div>
+      </div>
+      <div class="site-grid">${cards || '<div class="empty" style="grid-column:1/-1">该分类暂无网站，点击右上角「添加网站」</div>'}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ============ 项目 ============ */
+function renderProjects(){
+  const box = $('#projGrid');
+  box.innerHTML = state.projects.map(p=>`
+    <div class="proj-card card">
+      <span class="del" data-action="del-project" data-id="${p.id}">✕</span>
+      <h4>🐙 <a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.name)}</a></h4>
+      <div class="desc">${esc(p.desc)}</div>
+      <div class="tags">${(p.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>
+    </div>`).join('') || '<div class="empty" style="grid-column:1/-1">暂无项目，点击「添加项目」收藏你的第一个仓库</div>';
+}
+
+/* ============ 笔记 ============ */
+let currentNoteId = null;
+let previewOn = false;
+
+function renderNoteList(filter=''){
+  const list = [...state.notes].sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0))
+    .filter(n=>!filter || n.title.includes(filter) || (n.tags||'').includes(filter) || (n.content||'').includes(filter));
+  $('#noteList').innerHTML = list.map(n=>`
+    <div class="note-item ${n.id===currentNoteId?'active':''}" data-action="select-note" data-id="${n.id}">
+      <span class="del" data-action="del-note" data-id="${n.id}">✕</span>
+      <h5>${esc(n.title||'未命名笔记')}</h5>
+      <div class="meta">${esc(n.tags||'')} · ${fmtTime(n.updatedAt)}</div>
+    </div>`).join('') || '<div class="empty">暂无笔记，点击「新建笔记」开始记录</div>';
+}
+function openNote(id){
+  currentNoteId = id;
+  previewOn = false;
+  const n = state.notes.find(x=>x.id===id);
+  $('#noteEditor').style.display = 'block';
+  $('#noteTitle').value = n.title; $('#noteTags').value = n.tags||''; $('#noteContent').value = n.content||'';
+  $('#noteContent').style.display = 'block'; $('#notePreview').style.display = 'none';
+  $('#togglePreview').textContent = '👁 预览';
+  renderNoteList($('#noteSearch').value);
+}
+function saveCurrentNote(){
+  if(!currentNoteId) return;
+  const n = state.notes.find(x=>x.id===currentNoteId);
+  n.title = $('#noteTitle').value || '未命名笔记';
+  n.tags = $('#noteTags').value;
+  n.content = $('#noteContent').value;
+  n.updatedAt = Date.now();
+  save('notes'); renderNoteList($('#noteSearch').value); renderSideRecent();
+  flash('💾 已保存');
+}
+
+/* 极简 Markdown 渲染 */
+function renderMarkdown(src){
+  if(!src) return '';
+  const codeBlocks = [];
+  src = src.replace(/```(\w*)\n?([\s\S]*?)```/g, (m, lang, code)=>{
+    codeBlocks.push(`<pre><code>${esc(code)}</code></pre>`);
+    return `\u0000CODE${codeBlocks.length-1}\u0000`;
+  });
+  const inline = text => {
+    text = esc(text);
+    text = text.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, '<img src="$2" alt="$1">');
+    text = text.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    text = text.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
+    text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+    text = text.replace(/\*([^*]+)\*/g, '<i>$1</i>');
+    return text;
+  };
+  const lines = src.split('\n');
+  let html = '', list = [], listType = null;
+  const flush = () => {
+    if(list.length){ html += `<${listType==='ol'?'ol':'ul'}>${list.map(li=>`<li>${li}</li>`).join('')}</${listType==='ol'?'ol':'ul'}>`; list=[]; listType=null; }
+  };
+  for(const line of lines){
+    if(line.trim() === ''){ flush(); continue; }
+    let m;
+    if((m = line.match(/^(#{1,6})\s+(.*)/))){ flush(); const lv=m[1].length; html += `<h${lv}>${inline(m[2])}</h${lv}>`; continue; }
+    if((m = line.match(/^>\s?(.*)/))){ flush(); html += `<blockquote>${inline(m[1])}</blockquote>`; continue; }
+    if(/^\s*([-*_])\s*\1{2,}\s*$/.test(line)){ flush(); html += '<hr>'; continue; }
+    if((m = line.match(/^\s*[-*+]\s+(.*)/))){ if(listType!=='ul'){flush(); listType='ul';} list.push(inline(m[1])); continue; }
+    if((m = line.match(/^\s*\d+\.\s+(.*)/))){ if(listType!=='ol'){flush(); listType='ol';} list.push(inline(m[1])); continue; }
+    if((m = line.match(/^!\[([^\]]*)\]\(([^)\s]+)\)$/))){ flush(); html += `<img src="${m[2]}" alt="${esc(m[1])}">`; continue; }
+    flush(); html += `<p>${inline(line)}</p>`;
+  }
+  flush();
+  html = html.replace(/\u0000CODE(\d+)\u0000/g, (m,i)=>codeBlocks[+i]);
+  return html;
+}
+
+/* 粘贴 / 拖拽图片 */
+function insertImage(dataUrl){
+  const max = 1.5 * 1024 * 1024;
+  if(dataUrl.length > max){ flash('⚠️ 图片过大（超过约1.5MB），请压缩后重试', true); return; }
+  const ta = $('#noteContent');
+  const md = `![图片](${dataUrl})`;
+  const s = ta.selectionStart ?? ta.value.length, e = ta.selectionEnd ?? ta.value.length;
+  ta.value = ta.value.slice(0,s) + md + ta.value.slice(e);
+  ta.focus();
+}
+
+/* ============ 待办 ============ */
+function renderTodos(){
+  $('#todoList').innerHTML = state.todos.map(t=>`
+    <div class="todo-item ${t.done?'done':''}">
+      <input type="checkbox" ${t.done?'checked':''} data-action="toggle-todo" data-id="${t.id}">
+      <span class="txt">${esc(t.text)}</span>
+      <button class="todo-del" data-action="del-todo" data-id="${t.id}">✕</button>
+    </div>`).join('') || '<div class="empty">暂无待办，添加一个学习任务吧</div>';
+}
+
+/* ============ 学习历程 ============ */
+function renderJourney(){
+  const items = [...state.journey].sort((a,b)=>b.date.localeCompare(a.date));
+  $('#timeline').innerHTML = items.map(it=>`
+    <div class="tl-item">
+      <div class="tl-date">${esc(it.date)}</div>
+      <h4>${esc(it.title)} <button class="del" style="position:static;opacity:1;vertical-align:middle" data-action="del-journey" data-id="${it.id}">✕</button></h4>
+      <p>${esc(it.desc)}</p>
+    </div>`).join('') || '<div class="empty">还没有记录，添加你的第一个学习里程碑</div>';
+}
+
+/* ============ 模态框 ============ */
+function openModal(html){
+  $('#modalBox').innerHTML = html;
+  $('#modalMask').classList.add('show');
+}
+function closeModal(){ $('#modalMask').classList.remove('show'); }
+
+/* ============ 各类表单 ============ */
+function modalSite(){
+  openModal(`
+    <h3>添加网站</h3>
+    <label>分类</label>
+    <select id="f-cat">${Object.entries(CATS).map(([k,c])=>`<option value="${k}">${c.name}</option>`).join('')}</select>
+    <label>网站名称</label><input type="text" id="f-name" placeholder="如：arXiv">
+    <label>网址</label><input type="url" id="f-url" placeholder="https://...">
+    <label>简介（可选）</label><input type="text" id="f-desc" placeholder="一句话描述">
+    <div class="btn-row">
+      <button class="btn ghost" data-action="close-modal">取消</button>
+      <button class="btn primary" data-action="submit-site">保存</button>
+    </div>`);
+  $('#f-name').focus();
+}
+function submitSite(){
+  const name = $('#f-name').value.trim(), url = $('#f-url').value.trim();
+  if(!name || !url){ flash('⚠️ 请填写名称和网址', true); return; }
+  state.sites.push({ id:uid(), cat:$('#f-cat').value, name, url:/^https?:\/\//.test(url)?url:'https://'+url, desc:$('#f-desc').value.trim()||'—' });
+  save('sites'); renderSites(); closeModal(); flash('✅ 已添加');
+}
+function modalProject(){
+  openModal(`
+    <h3>添加项目</h3>
+    <label>项目名称</label><input type="text" id="f-name" placeholder="如：tensorflow">
+    <label>GitHub 地址</label><input type="url" id="f-url" placeholder="https://github.com/...">
+    <label>简介（可选）</label><input type="text" id="f-desc">
+    <label>标签（用逗号分隔）</label><input type="text" id="f-tags" placeholder="框架, NLP">
+    <div class="btn-row">
+      <button class="btn ghost" data-action="close-modal">取消</button>
+      <button class="btn primary" data-action="submit-project">保存</button>
+    </div>`);
+}
+function submitProject(){
+  const name = $('#f-name').value.trim(), url = $('#f-url').value.trim();
+  if(!name || !url){ flash('⚠️ 请填写名称和地址', true); return; }
+  state.projects.push({ id:uid(), name, url:/^https?:\/\//.test(url)?url:'https://'+url, desc:$('#f-desc').value.trim()||'—', tags:$('#f-tags').value.split(/[,，]/).map(s=>s.trim()).filter(Boolean) });
+  save('projects'); renderProjects(); closeModal(); flash('✅ 已添加');
+}
+function modalJourney(){
+  openModal(`
+    <h3>添加里程碑</h3>
+    <label>日期</label><input type="text" id="f-date" placeholder="如：2026-11 或 2026-11-20">
+    <label>标题</label><input type="text" id="f-title" placeholder="如：完成深度学习入门">
+    <label>描述（可选）</label><textarea id="f-desc"></textarea>
+    <div class="btn-row">
+      <button class="btn ghost" data-action="close-modal">取消</button>
+      <button class="btn primary" data-action="submit-journey">保存</button>
+    </div>`);
+}
+function submitJourney(){
+  const title = $('#f-title').value.trim();
+  if(!title){ flash('⚠️ 请填写标题', true); return; }
+  state.journey.push({ id:uid(), date:$('#f-date').value.trim()||'今天', title, desc:$('#f-desc').value.trim() });
+  save('journey'); renderJourney(); renderSideRecent(); closeModal(); flash('✅ 已添加');
+}
+function modalProfile(){
+  const p = state.profile;
+  openModal(`
+    <h3>编辑个人资料</h3>
+    <label>头像</label>
+    <div style="display:flex;gap:10px;align-items:center">
+      <input type="text" id="f-avatar" placeholder="粘贴头像图片地址，或点右边上传" value="${esc(p.avatar)}">
+      <label class="btn small" style="cursor:pointer;white-space:nowrap">上传<input type="file" id="f-avatar-file" accept="image/*" style="display:none"></label>
+    </div>
+    <label>昵称</label><input type="text" id="f-name" value="${esc(p.name)}">
+    <label>个性签名 Slogan</label><input type="text" id="f-slogan" value="${esc(p.slogan)}">
+    <label>GitHub</label><input type="url" id="f-github" placeholder="https://github.com/你的用户名" value="${esc(p.contacts.github)}">
+    <label>邮箱</label><input type="text" id="f-email" placeholder="you@example.com" value="${esc(p.contacts.email)}">
+    <label>B站</label><input type="url" id="f-bilibili" placeholder="https://space.bilibili.com/..." value="${esc(p.contacts.bilibili)}">
+    <label>博客</label><input type="url" id="f-blog" placeholder="https://..." value="${esc(p.contacts.blog)}">
+    <div class="btn-row">
+      <button class="btn ghost" data-action="close-modal">取消</button>
+      <button class="btn primary" data-action="submit-profile">保存</button>
+    </div>`);
+  $('#f-avatar-file').addEventListener('change', e=>{
+    const f = e.target.files[0]; if(!f) return;
+    const r = new FileReader();
+    r.onload = () => { $('#f-avatar').value = r.result; flash('✅ 头像已读取，点保存生效'); };
+    if(f.size > 600*1024){ flash('⚠️ 头像图片建议小于600KB', true); }
+    r.readAsDataURL(f);
+  });
+}
+function submitProfile(){
+  const p = state.profile;
+  p.name = $('#f-name').value.trim() || 'AI 学习者';
+  p.slogan = $('#f-slogan').value.trim() || '路虽远，行则将至';
+  p.avatar = $('#f-avatar').value.trim();
+  p.contacts = { github:$('#f-github').value.trim(), email:$('#f-email').value.trim(), bilibili:$('#f-bilibili').value.trim(), blog:$('#f-blog').value.trim() };
+  save('profile'); renderProfile(); closeModal(); flash('✅ 资料已更新');
+}
+
+/* ============ 提示 ============ */
+let flashTimer;
+function flash(msg, warn){
+  let t = $('#flashToast');
+  if(!t){ t = document.createElement('div'); t.id='flashToast'; t.style.cssText='position:fixed;bottom:30px;left:50%;transform:translateX(-50%);z-index:200;padding:12px 22px;border-radius:14px;background:rgba(20,24,60,.95);border:1px solid rgba(122,162,255,.4);box-shadow:0 10px 30px rgba(0,0,0,.5);font-size:14px;transition:.3s;opacity:0'; document.body.appendChild(t); }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(flashTimer);
+  flashTimer = setTimeout(()=> t.style.opacity = '0', 1800);
+}
+
+/* ============ 事件委托 ============ */
+document.addEventListener('click', e=>{
+  const el = e.target.closest('[data-action],[data-view]');
+  if(!el) return;
+
+  if(el.dataset.view){ switchView(el.dataset.view); return; }
+
+  const id = el.dataset.id;
+  switch(el.dataset.action){
+    case 'edit-profile': modalProfile(); break;
+    case 'add-site': modalSite(); break;
+    case 'submit-site': submitSite(); break;
+    case 'del-site': if(confirm('删除这个网站？')){ state.sites = state.sites.filter(s=>s.id!==id); save('sites'); renderSites(); } break;
+    case 'add-project': modalProject(); break;
+    case 'submit-project': submitProject(); break;
+    case 'del-project': if(confirm('删除这个项目？')){ state.projects = state.projects.filter(p=>p.id!==id); save('projects'); renderProjects(); } break;
+    case 'add-note': { const n={id:uid(),title:'未命名笔记',tags:'',content:'',updatedAt:Date.now()}; state.notes.push(n); save('notes'); openNote(n.id); break; }
+    case 'select-note': if(!el.classList.contains('del')) openNote(id); break;
+    case 'save-note': saveCurrentNote(); break;
+    case 'del-note': if(confirm('删除这篇笔记？')){ state.notes = state.notes.filter(n=>n.id!==id); save('notes'); if(currentNoteId===id){ currentNoteId=null; $('#noteEditor').style.display='none'; } renderNoteList($('#noteSearch').value); renderSideRecent(); } break;
+    case 'add-todo': { const v=$('#todoInput').value.trim(); if(v){ state.todos.push({id:uid(),text:v,done:false}); save('todos'); renderTodos(); $('#todoInput').value=''; } break; }
+    case 'toggle-todo': { const t=state.todos.find(x=>x.id===id); t.done=!t.done; save('todos'); renderTodos(); break; }
+    case 'del-todo': state.todos = state.todos.filter(t=>t.id!==id); save('todos'); renderTodos(); break;
+    case 'add-journey': modalJourney(); break;
+    case 'submit-journey': submitJourney(); break;
+    case 'del-journey': if(confirm('删除这条记录？')){ state.journey = state.journey.filter(j=>j.id!==id); save('journey'); renderJourney(); renderSideRecent(); } break;
+    case 'submit-profile': submitProfile(); break;
+    case 'close-modal': closeModal(); break;
+  }
+});
+
+/* 回车提交待办 */
+$('#todoInput').addEventListener('keydown', e=>{ if(e.key==='Enter') document.querySelector('[data-action="add-todo"]').click(); });
+/* Ctrl+S 保存笔记 */
+document.addEventListener('keydown', e=>{ if((e.ctrlKey||e.metaKey) && e.key==='s' && currentNoteId){ e.preventDefault(); saveCurrentNote(); } });
+/* 笔记搜索 */
+$('#noteSearch').addEventListener('input', e=>renderNoteList(e.target.value));
+/* 预览切换 */
+$('#togglePreview').addEventListener('click', ()=>{
+  previewOn = !previewOn;
+  $('#noteContent').style.display = previewOn ? 'none' : 'block';
+  $('#notePreview').style.display = previewOn ? 'block' : 'none';
+  $('#togglePreview').textContent = previewOn ? '✏️ 编辑' : '👁 预览';
+  if(previewOn) $('#notePreview').innerHTML = renderMarkdown($('#noteContent').value);
+});
+/* 粘贴图片 */
+$('#noteContent').addEventListener('paste', e=>{
+  const items = e.clipboardData && e.clipboardData.items;
+  if(!items) return;
+  for(const it of items){
+    if(it.type.startsWith('image/')){ e.preventDefault(); const f = it.getAsFile(); const r=new FileReader(); r.onload=()=>insertImage(r.result); r.readAsDataURL(f); break; }
+  }
+});
+/* 拖拽图片 */
+$('#noteContent').addEventListener('drop', e=>{
+  const f = e.dataTransfer && e.dataTransfer.files[0];
+  if(f && f.type.startsWith('image/')){ e.preventDefault(); const r=new FileReader(); r.onload=()=>insertImage(r.result); r.readAsDataURL(f); }
+});
+$('#noteContent').addEventListener('dragover', e=>e.preventDefault());
+/* 汉堡菜单 */
+$('#hamburger').addEventListener('click', ()=>$('#sidebar').classList.toggle('open'));
+/* 点击遮罩关闭 */
+$('#modalMask').addEventListener('click', e=>{ if(e.target===$('#modalMask')) closeModal(); });
+/* 点击头像编辑资料 */
+$('#avatarBox').addEventListener('click', modalProfile);
+
+/* ============ 初始化 ============ */
+function init(){
+  loadAll();
+  initStars();
+  renderProfile();
+  renderSideRecent();
+  renderSites();
+  renderProjects();
+  renderTodos();
+  renderNoteList();
+  renderOverview();
+}
+init();
+</script>
+</body>
+</html>
